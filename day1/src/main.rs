@@ -18,12 +18,23 @@ fn part1() -> String {
 }
 
 fn part2() -> String {
+    let replace_with_digit = |line: &str| {
+        line.replace("one", "o1e")
+            .replace("two", "t2o")
+            .replace("three", "t3e")
+            .replace("four", "4")
+            .replace("five", "5e")
+            .replace("six", "6")
+            .replace("seven", "7n")
+            .replace("eight", "e8t")
+            .replace("nine", "n9e")
+    };
+
     let data = std::fs::read_to_string("day1/data/day1.txt").unwrap();
     let ans: u32 = data
         .lines()
         .map(|line| {
-            let line_replaced = replace_with_digit(line.to_string());
-            let digits: Vec<u32> = line_replaced
+            let digits: Vec<u32> = replace_with_digit(line)
                 .chars()
                 .filter_map(|c| c.to_digit(10))
                 .collect();
@@ -33,23 +44,4 @@ fn part2() -> String {
         .sum();
 
     ans.to_string()
-}
-
-fn replace_with_digit(mut line: String) -> String {
-    const DIGITS_LETTERS: [(&str, &str); 9] = [
-        ("one", "o1e"),
-        ("two", "t2o"),
-        ("three", "t3e"),
-        ("four", "4"),
-        ("five", "5e"),
-        ("six", "6"),
-        ("seven", "7n"),
-        ("eight", "e8t"),
-        ("nine", "n9e"),
-    ];
-
-    for (letters, digit) in DIGITS_LETTERS {
-        line = line.replace(letters, digit);
-    }
-    line
 }
