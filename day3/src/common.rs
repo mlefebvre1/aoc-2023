@@ -1,3 +1,5 @@
+use util::grid::Grid;
+
 #[derive(Debug)]
 pub enum Symbol {
     Number(u32),
@@ -15,23 +17,23 @@ impl From<char> for Symbol {
     }
 }
 
-pub type Matrix<T> = Vec<Vec<T>>;
 pub type Number = String;
 
-pub fn make_symbol_matrix(data: &str, numbers: &[Vec<String>]) -> Matrix<Symbol> {
-    let mut matrix: Matrix<Symbol> = data
-        .lines()
-        .map(|line| line.chars().map(Symbol::from).collect())
-        .collect();
+pub fn make_symbol_grid(data: &str, numbers: &[Vec<String>]) -> Grid<Symbol> {
+    let mut grid = Grid::new(
+        data.lines()
+            .map(|line| line.chars().map(Symbol::from).collect())
+            .collect(),
+    );
 
-    for y in 0..matrix.len() {
+    for (y, _) in numbers.iter().enumerate() {
         let ns = &numbers[y];
         let mut ni = 0;
         let mut rep = 0;
-        for x in 0..matrix[y].len() {
-            if let Symbol::Number(_) = matrix[y][x] {
+        for x in 0..grid.row_len(y).unwrap() {
+            if let Some(Symbol::Number(_)) = grid.get((x, y)) {
                 let n: u32 = ns[ni].parse().unwrap();
-                matrix[y][x] = Symbol::Number(n);
+                grid.set((x, y), Symbol::Number(n));
                 rep += 1;
                 if rep >= ns[ni].len() {
                     rep = 0;
@@ -40,10 +42,10 @@ pub fn make_symbol_matrix(data: &str, numbers: &[Vec<String>]) -> Matrix<Symbol>
             }
         }
     }
-    matrix
+    grid
 }
 
-pub fn extract_numbers_matrix(data: &str) -> Matrix<Number> {
+pub fn extract_numbers_matrix(data: &str) -> Vec<Vec<Number>> {
     data.lines()
         .map(|line| {
             let s = line.split(['#', '$', '%', '&', '*', '+', '-', '.', '/', '=', '@']);
@@ -67,45 +69,41 @@ pub fn display_separators(s: &str) {
     println!("seps={seps:?}");
 }
 
-pub fn adjacent_numbers((x, y): (usize, usize), matrix: &Matrix<Symbol>) -> Vec<u32> {
+pub fn adjacent_numbers((x, y): (usize, usize), grid: &Grid<Symbol>) -> Vec<u32> {
     let mut adjacents = vec![];
     // up-left
-    if let Some(Symbol::Number(n)) = get_number(matrix, (x - 1, y - 1)) {
+    if let Some(Symbol::Number(n)) = grid.get((x - 1, y - 1)) {
         adjacents.push(*n);
     }
     //up
-    if let Some(Symbol::Number(n)) = get_number(matrix, (x, y - 1)) {
+    if let Some(Symbol::Number(n)) = grid.get((x, y - 1)) {
         adjacents.push(*n);
     }
     //up-right
-    if let Some(Symbol::Number(n)) = get_number(matrix, (x + 1, y - 1)) {
+    if let Some(Symbol::Number(n)) = grid.get((x + 1, y - 1)) {
         adjacents.push(*n);
     }
     //right
-    if let Some(Symbol::Number(n)) = get_number(matrix, (x + 1, y)) {
+    if let Some(Symbol::Number(n)) = grid.get((x + 1, y)) {
         adjacents.push(*n);
     }
     //down-right
-    if let Some(Symbol::Number(n)) = get_number(matrix, (x + 1, y + 1)) {
+    if let Some(Symbol::Number(n)) = grid.get((x + 1, y + 1)) {
         adjacents.push(*n);
     }
     //down
-    if let Some(Symbol::Number(n)) = get_number(matrix, (x, y + 1)) {
+    if let Some(Symbol::Number(n)) = grid.get((x, y + 1)) {
         adjacents.push(*n);
     }
     //down-left
-    if let Some(Symbol::Number(n)) = get_number(matrix, (x - 1, y + 1)) {
+    if let Some(Symbol::Number(n)) = grid.get((x - 1, y + 1)) {
         adjacents.push(*n);
     }
     //left
-    if let Some(Symbol::Number(n)) = get_number(matrix, (x - 1, y)) {
+    if let Some(Symbol::Number(n)) = grid.get((x - 1, y)) {
         adjacents.push(*n);
     }
 
     adjacents.dedup();
     adjacents
-}
-
-fn get_number(matrix: &Matrix<Symbol>, (x, y): (usize, usize)) -> Option<&Symbol> {
-    matrix.get(y).and_then(|row| row.get(x))
 }
