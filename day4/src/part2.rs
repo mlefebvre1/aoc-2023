@@ -3,45 +3,28 @@ use std::str::FromStr;
 
 use crate::common::Card;
 
+struct Cards(Vec<Card>);
+
+impl Cards {
+    fn new(data: &str) -> Result<Self> {
+        let cards: Result<Vec<Card>> = data.lines().map(Card::from_str).collect();
+        Ok(Self(cards?))
+    }
+
+    fn visit(&self) -> usize {
+        let mut visit_sum = vec![0usize; self.0.len()];
+        for card in self.0.iter().rev() {
+            let n = card.matches().len();
+            let i = card.id();
+            visit_sum[i - 1] = 1 + visit_sum[i..i + n].iter().sum::<usize>();
+        }
+        visit_sum.iter().sum()
+    }
+}
+
 pub fn run() -> String {
-    let data = std::fs::read_to_string("day4/data/day4tmp.txt").unwrap();
-    let cards: Result<Vec<Card>> = data.lines().map(Card::from_str).collect();
-    let cards_and_matches: Vec<(Card, Vec<usize>)> = cards
-        .unwrap()
-        .into_iter()
-        .map(|card| {
-            let matches = card.matches();
-            (card, matches)
-        })
-        .collect();
-
-    let card_scores: Vec<usize> = cards_and_matches
-        .iter()
-        .map(|(_, matches)| {
-            if !matches.is_empty() {
-                2usize.pow(matches.len() as u32 - 1)
-            } else {
-                0
-            }
-        })
-        .collect();
-    println!("{card_scores:?}");
-
-    for (card, matches) in cards_and_matches.iter() {}
-    // let ans: usize = cards_and_matches
-    //     .iter()
-    //     .map(|(card, matches)| {
-    //         if !matches.is_empty() {
-    //             let i = card.id();
-    //             let r = i..(i + matches.len());
-    //             let score = card_scores[r.clone()].iter().sum();
-    //             println!("i={i} range={r:?}, matches={:?}, score={score}", matches);
-    //             score
-    //         } else {
-    //             0
-    //         }
-    //     })
-    //     .sum();
-    let ans = 0;
+    let data = std::fs::read_to_string("day4/data/day4.txt").unwrap();
+    let cards = Cards::new(&data).unwrap();
+    let ans = cards.visit();
     ans.to_string()
 }

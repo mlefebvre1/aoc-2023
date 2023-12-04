@@ -8,13 +8,7 @@ pub fn run() -> String {
         .lines()
         .map(|line| {
             let card = Card::from_str(line).unwrap();
-            let matches = card.matches();
-
-            if !matches.is_empty() {
-                2usize.pow(matches.len() as u32 - 1)
-            } else {
-                0
-            }
+            card.score()
         })
         .sum();
 

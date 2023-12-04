@@ -17,6 +17,14 @@ impl Card {
             .copied()
             .collect()
     }
+    pub fn score(&self) -> usize {
+        let matches = self.matches();
+        if !matches.is_empty() {
+            2usize.pow(matches.len() as u32 - 1)
+        } else {
+            0
+        }
+    }
     pub fn id(&self) -> usize {
         self.id
     }
