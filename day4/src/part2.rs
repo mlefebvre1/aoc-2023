@@ -22,8 +22,8 @@ impl Cards {
     }
 }
 
-pub fn run() -> String {
-    let data = std::fs::read_to_string("day4/data/day4.txt").unwrap();
+pub fn run(file: &str) -> String {
+    let data = std::fs::read_to_string(file).unwrap();
     let cards = Cards::new(&data).unwrap();
     let ans = cards.visit();
     ans.to_string()

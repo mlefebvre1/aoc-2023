@@ -4,8 +4,8 @@ use crate::common::{adjacent_numbers, extract_numbers_matrix, make_symbol_grid};
 
 use super::common::Symbol;
 
-pub fn run() -> String {
-    let data = std::fs::read_to_string("day3/data/day3.txt").unwrap();
+pub fn run(file: &str) -> String {
+    let data = std::fs::read_to_string(file).unwrap();
     // display_separators(&data);
     let numbers = extract_numbers_matrix(&data);
     let matrix = make_symbol_grid(&data, &numbers);

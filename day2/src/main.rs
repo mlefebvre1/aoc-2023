@@ -92,12 +92,13 @@ impl FromStr for Game {
 }
 
 fn main() {
-    println!("part1={}", part1());
-    println!("part2={}", part2());
+    let cli = util::Cli::get();
+    println!("part1={}", part1(&cli.file));
+    println!("part2={}", part2(&cli.file));
 }
 
-fn part1() -> String {
-    let data = std::fs::read_to_string("day2/data/day2.txt").unwrap();
+fn part1(file: &str) -> String {
+    let data = std::fs::read_to_string(file).unwrap();
     let ans: usize = data
         .lines()
         .filter_map(|line| {
@@ -114,8 +115,8 @@ fn part1() -> String {
     ans.to_string()
 }
 
-fn part2() -> String {
-    let data = std::fs::read_to_string("day2/data/day2.txt").unwrap();
+fn part2(file: &str) -> String {
+    let data = std::fs::read_to_string(file).unwrap();
     let ans: usize = data
         .lines()
         .map(|line| {

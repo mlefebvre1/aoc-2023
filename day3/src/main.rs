@@ -3,6 +3,7 @@ mod part1;
 mod part2;
 
 fn main() {
-    println!("part1={}", part1::run());
-    println!("part2={}", part2::run());
+    let cli = util::Cli::get();
+    println!("part1={}", part1::run(&cli.file));
+    println!("part2={}", part2::run(&cli.file));
 }

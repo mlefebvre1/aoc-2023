@@ -1,10 +1,11 @@
 fn main() {
-    println!("part1={}", part1());
-    println!("part2={}", part2());
+    let cli = util::Cli::get();
+    println!("part1={}", part1(&cli.file));
+    println!("part2={}", part2(&cli.file));
 }
 
-fn part1() -> String {
-    let data = std::fs::read_to_string("day1/data/day1.txt").unwrap();
+fn part1(file: &str) -> String {
+    let data = std::fs::read_to_string(file).unwrap();
     let ans: u32 = data
         .lines()
         .map(|line| {
@@ -17,7 +18,7 @@ fn part1() -> String {
     ans.to_string()
 }
 
-fn part2() -> String {
+fn part2(file: &str) -> String {
     let replace_with_digit = |line: &str| {
         line.replace("one", "o1e")
             .replace("two", "t2o")
@@ -30,7 +31,7 @@ fn part2() -> String {
             .replace("nine", "n9e")
     };
 
-    let data = std::fs::read_to_string("day1/data/day1.txt").unwrap();
+    let data = std::fs::read_to_string(file).unwrap();
     let ans: u32 = data
         .lines()
         .map(|line| {
