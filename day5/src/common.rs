@@ -1,15 +1,11 @@
 use anyhow::Error;
-use std::{
-    num::ParseIntError,
-    ops::{Range, RangeBounds},
-    str::FromStr,
-};
+use std::{ops::Range, str::FromStr};
 
 #[derive(Debug)]
-struct Map {
-    dest: usize,
-    src: usize,
-    len: usize,
+pub struct Map {
+    pub dest: usize,
+    pub src: usize,
+    pub len: usize,
 }
 
 impl FromStr for Map {
@@ -27,18 +23,13 @@ impl Map {
     pub fn src_range(&self) -> Range<usize> {
         self.src..self.src + self.len
     }
-}
-
-#[derive(Debug)]
-pub struct Almanac {
-    seeds: Vec<usize>,
-    seed_to_soil: Vec<Map>,
-    soil_to_fertilizer: Vec<Map>,
-    fertilizer_to_water: Vec<Map>,
-    water_to_light: Vec<Map>,
-    light_to_temperature: Vec<Map>,
-    temperature_to_humidity: Vec<Map>,
-    humidity_to_location: Vec<Map>,
+    pub fn from_range(start: usize, end: usize, dst_start: usize) -> Self {
+        Self {
+            src: start,
+            dest: dst_start,
+            len: end - start,
+        }
+    }
 }
 
 macro_rules! extract_map {
@@ -52,26 +43,21 @@ macro_rules! extract_map {
     };
 }
 
-impl FromStr for Almanac {
+#[derive(Debug)]
+pub struct Maps {
+    pub seed_to_soil: Vec<Map>,
+    pub soil_to_fertilizer: Vec<Map>,
+    pub fertilizer_to_water: Vec<Map>,
+    pub water_to_light: Vec<Map>,
+    pub light_to_temperature: Vec<Map>,
+    pub temperature_to_humidity: Vec<Map>,
+    pub humidity_to_location: Vec<Map>,
+}
+
+impl FromStr for Maps {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut lines = s.lines();
-
-        //sseds
-        let seeds_raw = lines
-            .by_ref()
-            .take_while(|line| !line.is_empty())
-            .collect::<Vec<_>>();
-        let seeds: Result<Vec<usize>, ParseIntError> = seeds_raw
-            .first()
-            .unwrap()
-            .split(':')
-            .nth(1)
-            .unwrap()
-            .split_whitespace()
-            .map(|ns| ns.parse())
-            .collect();
-
         // seed-to-soil map
         let seed_to_soil: Result<Vec<Map>, Error> = extract_map!(lines);
         // soil-to-fertilizer map
@@ -89,9 +75,7 @@ impl FromStr for Almanac {
 
         // humidity-to-location map
         let humidity_to_location: Result<Vec<Map>, Error> = extract_map!(lines);
-
         Ok(Self {
-            seeds: seeds?,
             seed_to_soil: seed_to_soil?,
             soil_to_fertilizer: soil_to_fertilizer?,
             fertilizer_to_water: fertilizer_to_water?,
@@ -100,39 +84,5 @@ impl FromStr for Almanac {
             temperature_to_humidity: temperature_to_humidity?,
             humidity_to_location: humidity_to_location?,
         })
-    }
-}
-
-impl Almanac {
-    pub fn transform_seeds(&self) -> Vec<usize> {
-        self.seeds
-            .iter()
-            .map(|&seed| {
-                // seed-to-soil
-                let tseed = Self::transform(seed, &self.seed_to_soil);
-                // soil-to-fertilizer
-                let tseed = Self::transform(tseed, &self.soil_to_fertilizer);
-                // fertilizer_to_water
-                let tseed = Self::transform(tseed, &self.fertilizer_to_water);
-                // water_to_light
-                let tseed = Self::transform(tseed, &self.water_to_light);
-                // light_to_temperature
-                let tseed = Self::transform(tseed, &self.light_to_temperature);
-                // temperature_to_humidity
-                let tseed = Self::transform(tseed, &self.temperature_to_humidity);
-                // humidity_to_location
-                Self::transform(tseed, &self.humidity_to_location)
-            })
-            .collect()
-    }
-    fn transform(seed: usize, maps: &[Map]) -> usize {
-        maps.iter()
-            .find_map(|m| {
-                m.src_range().contains(&seed).then(|| {
-                    let i = seed - m.src;
-                    m.dest + i
-                })
-            })
-            .unwrap_or(seed)
     }
 }
