@@ -23,13 +23,6 @@ impl Map {
     pub fn src_range(&self) -> Range<usize> {
         self.src..self.src + self.len
     }
-    pub fn from_range(start: usize, end: usize, dst_start: usize) -> Self {
-        Self {
-            src: start,
-            dest: dst_start,
-            len: end - start,
-        }
-    }
 }
 
 macro_rules! extract_map {
