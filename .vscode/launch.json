@@ -174,20 +174,20 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'day5'",
+            "name": "Debug executable 'dayN'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=day8",
-                    "--package=day8"
+                    "--bin=day9",
+                    "--package=day9"
                 ],
                 "filter": {
-                    "name": "day8",
+                    "name": "day9",
                     "kind": "bin"
                 }
             },
             "args": [
-                "data/day8.txt"
+                "data/day9.txt"
             ],
             "cwd": "${workspaceFolder}"
         },
