@@ -1,6 +1,6 @@
 use util::grid::Grid;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Symbol {
     Number(u32),
     Period,

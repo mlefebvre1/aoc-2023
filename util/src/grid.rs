@@ -1,8 +1,9 @@
 type InnerGrid<T> = Vec<Vec<T>>;
 
-pub struct Grid<T>(InnerGrid<T>);
+#[derive(Debug)]
+pub struct Grid<T: PartialEq>(InnerGrid<T>);
 
-impl<T> Grid<T> {
+impl<T: PartialEq> Grid<T> {
     pub fn new(data: Vec<Vec<T>>) -> Grid<T> {
         Self(data)
     }
@@ -23,8 +24,24 @@ impl<T> Grid<T> {
     pub fn len(&self) -> usize {
         self.0.len()
     }
+    pub fn shape(&self) -> (usize, usize) {
+        let ylen = self.len();
+        let xlen = self.rows().nth(0).unwrap().len();
+        (xlen, ylen)
+    }
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
+    }
+
+    pub fn find(&self, item: &T) -> Option<(usize, usize)> {
+        for (y, row) in self.rows().enumerate() {
+            for (x, col) in row.iter().enumerate() {
+                if col == item {
+                    return Some((x, y));
+                }
+            }
+        }
+        None
     }
 
     pub fn row_len(&self, y: usize) -> Option<usize> {
