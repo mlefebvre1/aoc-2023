@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 type InnerGrid<T> = Vec<Vec<T>>;
 
 #[derive(Debug)]
@@ -20,12 +22,32 @@ impl<T: PartialEq> Grid<T> {
     pub fn rows(&self) -> impl Iterator<Item = &Vec<T>> {
         self.0.iter()
     }
-
-    pub fn len(&self) -> usize {
+    pub fn row_len(&self, y: usize) -> Option<usize> {
+        self.0.get(y).map(|row| row.len())
+    }
+    pub fn nb_rows(&self) -> usize {
         self.0.len()
     }
+    pub fn insert_row(&mut self, row_index: usize, row: Vec<T>) {
+        self.0.insert(row_index, row);
+    }
+
+    pub fn columns(&self) -> Vec<Vec<&T>> {
+        (0..self.nb_columns())
+            .map(|x| (0..self.nb_rows()).map(|y| &self.0[y][x]).collect())
+            .collect()
+    }
+    pub fn nb_columns(&self) -> usize {
+        self.0[0].len()
+    }
+    pub fn insert_column(&mut self, column_index: usize, column: Vec<T>) {
+        for (y, col) in (0..self.nb_rows()).zip(column) {
+            self.0[y].insert(column_index, col);
+        }
+    }
+
     pub fn shape(&self) -> (usize, usize) {
-        let ylen = self.len();
+        let ylen = self.nb_rows();
         let xlen = self.rows().nth(0).unwrap().len();
         (xlen, ylen)
     }
@@ -43,8 +65,27 @@ impl<T: PartialEq> Grid<T> {
         }
         None
     }
-
-    pub fn row_len(&self, y: usize) -> Option<usize> {
-        self.0.get(y).map(|row| row.len())
+    pub fn find_all(&self, item: &T) -> Vec<(usize, usize)> {
+        let mut v = vec![];
+        for (y, row) in self.rows().enumerate() {
+            for (x, col) in row.iter().enumerate() {
+                if col == item {
+                    v.push((x, y));
+                }
+            }
+        }
+        v
+    }
+}
+impl<T: PartialEq + Display> Display for Grid<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.rows().for_each(|row| {
+            row.iter().for_each(|col| {
+                s.push_str(&format!("{col}"));
+            });
+            s.push('\n');
+        });
+        write!(f, "{s}")
     }
 }
