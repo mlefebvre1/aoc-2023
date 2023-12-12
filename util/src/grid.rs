@@ -31,6 +31,9 @@ impl<T: PartialEq> Grid<T> {
     pub fn insert_row(&mut self, row_index: usize, row: Vec<T>) {
         self.0.insert(row_index, row);
     }
+    pub fn replace_row(&mut self, row_index: usize, row: Vec<T>) {
+        self.0[row_index] = row;
+    }
 
     pub fn columns(&self) -> Vec<Vec<&T>> {
         (0..self.nb_columns())
@@ -43,6 +46,11 @@ impl<T: PartialEq> Grid<T> {
     pub fn insert_column(&mut self, column_index: usize, column: Vec<T>) {
         for (y, col) in (0..self.nb_rows()).zip(column) {
             self.0[y].insert(column_index, col);
+        }
+    }
+    pub fn replace_column(&mut self, column_index: usize, column: Vec<T>) {
+        for (y, col) in (0..self.nb_rows()).zip(column) {
+            self.0[y][column_index] = col;
         }
     }
 
