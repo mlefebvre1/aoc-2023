@@ -62,7 +62,7 @@ impl Image {
             .collect();
         let columns_index_with_no_galaxies: Vec<usize> = self
             .0
-            .columns()
+            .columns_vec()
             .into_iter()
             .enumerate()
             .filter(|(_i, col)| col.iter().all(|&s| *s == SpaceType::EmptySpace))
