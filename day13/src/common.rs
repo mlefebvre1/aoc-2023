@@ -36,6 +36,12 @@ impl Patterns {
             .map(|pattern| pattern.find_reflection().score())
             .sum()
     }
+    pub fn reflections_score_smudge(&self) -> usize {
+        self.0
+            .iter()
+            .map(|pattern| pattern.find_smudge().score())
+            .sum()
+    }
 }
 
 pub struct Pattern(Grid<Element>);
@@ -78,6 +84,84 @@ impl Pattern {
 
         Reflection::NotFound
     }
+    pub fn find_smudge(&self) -> Reflection {
+        for i in 1..self.0.nb_rows() {
+            let (up_range, down_range) = Self::calculate_ranges(i, self.0.nb_rows());
+            let mut up_slice = self.0.rows_slice(up_range.start, up_range.end);
+            up_slice.reverse();
+            let down_slice = self.0.rows_slice(down_range.start, down_range.end);
+            for row in 0..up_slice.len() {
+                if up_slice[row] != down_slice[row]
+                    && up_slice[row]
+                        .iter()
+                        .zip(down_slice[row].iter())
+                        .filter(|(up, down)| up != down)
+                        .count()
+                        == 1
+                {
+                    let mut up_slice_mod = up_slice.clone();
+                    for col in 0..up_slice[row].len() {
+                        if up_slice[row][col] == down_slice[row][col] {
+                            up_slice_mod[row][col].smudge();
+                            break;
+                        }
+                    }
+                    if up_slice_mod[row] == down_slice[row] {
+                        println!("{i}");
+                    }
+                }
+            }
+            // for (up_row, down_row) in up_slice.iter().zip(down_slice.iter()) {
+            // if up_row != down_row
+            //     && up_row
+            //         .iter()
+            //         .zip(down_row.iter())
+            //         .filter(|(up, down)| up != down)
+            //         .count()
+            //         == 1
+            // {
+            //     let up_slice2 = up_slice.clone();
+            //     let down_slice2 = down_slice.clone();
+            //     if let Some(i) = up_row
+            //         .iter()
+            //         .zip(down_row.iter())
+            //         .position(|(up_item, down_item)| up_item != down_item)
+            //     {
+            //         up_row[i].smudge();
+            //     }
+            //     println!("{up_row:?}\n{down_row:?}");
+            //     println!("{i}");
+            // }
+        }
+        println!();
+
+        // (1..self.0.nb_rows())
+        //     .filter(|&i| {
+        //         let (up, down) = Self::calculate_ranges(i, self.0.nb_rows());
+        //         let mut up_slice = self.0.rows_slice(up.start, up.end);
+        //         up_slice.reverse();
+        //         let down_slice = self.0.rows_slice(down.start, down.end);
+        //         up_slice
+        //             .iter()
+        //             .zip(down_slice.iter())
+        //             .filter(|(up_row, down_row)| {
+        //                 (up_row != down_row)
+        //                     && up_row
+        //                         .iter()
+        //                         .zip(down_row.iter())
+        //                         .filter(|(up, down)| up != down)
+        //                         .count()
+        //                         == 1
+        //             })
+        //             .inspect(|(up_row, down_row)| println!("{up_row:?}\n{down_row:?}"))
+        //             .count()
+        //             == 1
+        //     })
+        //     .for_each(|i| println!("{i}"));
+
+        Reflection::NotFound
+    }
+
     fn calculate_ranges(i: usize, m: usize) -> (Range<usize>, Range<usize>) {
         let span = i.min(m - i);
         let up = if i > m / 2 { (i - span)..i } else { 0..i };
@@ -86,10 +170,18 @@ impl Pattern {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Element {
     Ash,
     Rock,
+}
+impl Element {
+    fn smudge(&mut self) {
+        match self {
+            Self::Ash => *self = Self::Rock,
+            Self::Rock => *self = Self::Ash,
+        }
+    }
 }
 impl TryFrom<char> for Element {
     type Error = Error;

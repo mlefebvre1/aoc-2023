@@ -3,7 +3,7 @@ use std::str::FromStr;
 use anyhow::{anyhow, Error};
 use util::grid::Grid;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum TileType {
     Vertical,
     Horizontal,
@@ -66,10 +66,8 @@ impl Diagram {
     pub fn grid_shape(&self) -> (usize, usize) {
         self.0.shape()
     }
-    pub fn initial_flow(&self) -> ((usize, usize), HorizontalDirection, VerticalDirection) {
-        let mut tile_loc = self.0.find(&TileType::Starting).unwrap();
-        let mut vertical = VerticalDirection::Undef;
-        let mut horizontal = HorizontalDirection::Undef;
+    fn initial_flow(&self) -> ((usize, usize), HorizontalDirection, VerticalDirection) {
+        let tile_loc = self.0.find(&TileType::Starting).unwrap();
 
         for (x, y, hor, vert) in [
             (

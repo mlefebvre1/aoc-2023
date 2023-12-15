@@ -3,9 +3,9 @@ use std::fmt::Display;
 type InnerGrid<T> = Vec<Vec<T>>;
 
 #[derive(Debug)]
-pub struct Grid<T: PartialEq>(InnerGrid<T>);
+pub struct Grid<T: PartialEq + Copy>(InnerGrid<T>);
 
-impl<T: PartialEq> Grid<T> {
+impl<T: PartialEq + Copy> Grid<T> {
     pub fn new(data: Vec<Vec<T>>) -> Grid<T> {
         Self(data)
     }
@@ -22,14 +22,19 @@ impl<T: PartialEq> Grid<T> {
     pub fn rows(&self) -> impl Iterator<Item = &Vec<T>> {
         self.0.iter()
     }
-    pub fn rows_vec(&self) -> Vec<Vec<&T>> {
+    pub fn rows_vec(&self) -> Vec<Vec<T>> {
         (0..self.nb_rows())
-            .map(|y| (0..self.nb_columns()).map(|x| &self.0[y][x]).collect())
+            .map(|y| (0..self.nb_columns()).map(|x| self.0[y][x]).collect())
             .collect()
     }
-    pub fn rows_slice(&self, start: usize, end: usize) -> Vec<Vec<&T>> {
+    pub fn rows_slice(&self, start: usize, end: usize) -> Vec<Vec<T>> {
         (start..end)
-            .map(|y| (0..self.nb_columns()).map(|x| &self.0[y][x]).collect())
+            .map(|y| (0..self.nb_columns()).map(|x| self.0[y][x]).collect())
+            .collect()
+    }
+    pub fn rows_slice_owned(&self, start: usize, end: usize) -> Vec<Vec<T>> {
+        (start..end)
+            .map(|y| (0..self.nb_columns()).map(|x| self.0[y][x]).collect())
             .collect()
     }
     pub fn row_len(&self, y: usize) -> Option<usize> {
@@ -45,14 +50,14 @@ impl<T: PartialEq> Grid<T> {
         self.0[row_index] = row;
     }
 
-    pub fn columns_vec(&self) -> Vec<Vec<&T>> {
+    pub fn columns_vec(&self) -> Vec<Vec<T>> {
         (0..self.nb_columns())
-            .map(|x| (0..self.nb_rows()).map(|y| &self.0[y][x]).collect())
+            .map(|x| (0..self.nb_rows()).map(|y| self.0[y][x]).collect())
             .collect()
     }
-    pub fn columns_slice(&self, start: usize, end: usize) -> Vec<Vec<&T>> {
+    pub fn columns_slice(&self, start: usize, end: usize) -> Vec<Vec<T>> {
         (start..end)
-            .map(|x| (0..self.nb_rows()).map(|y| &self.0[y][x]).collect())
+            .map(|x| (0..self.nb_rows()).map(|y| self.0[y][x]).collect())
             .collect()
     }
     pub fn nb_columns(&self) -> usize {
@@ -100,12 +105,12 @@ impl<T: PartialEq> Grid<T> {
         v
     }
 }
-impl<T: PartialEq> AsRef<InnerGrid<T>> for Grid<T> {
+impl<T: PartialEq + Copy> AsRef<InnerGrid<T>> for Grid<T> {
     fn as_ref(&self) -> &InnerGrid<T> {
         &self.0
     }
 }
-impl<T: PartialEq + Display> Display for Grid<T> {
+impl<T: PartialEq + Display + Copy> Display for Grid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
         self.rows().for_each(|row| {

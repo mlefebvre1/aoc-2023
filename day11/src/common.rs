@@ -3,7 +3,7 @@ use std::{fmt::Display, str::FromStr};
 use anyhow::{anyhow, Error};
 use util::grid::Grid;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SpaceType {
     EmptySpace,
     Galaxy,
@@ -65,7 +65,7 @@ impl Image {
             .columns_vec()
             .into_iter()
             .enumerate()
-            .filter(|(_i, col)| col.iter().all(|&s| *s == SpaceType::EmptySpace))
+            .filter(|(_i, col)| col.iter().all(|&s| s == SpaceType::EmptySpace))
             .map(|(i, _)| i)
             .collect();
 
