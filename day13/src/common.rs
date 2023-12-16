@@ -101,64 +101,45 @@ impl Pattern {
                 {
                     let mut up_slice_mod = up_slice.clone();
                     for col in 0..up_slice[row].len() {
-                        if up_slice[row][col] == down_slice[row][col] {
+                        if up_slice[row][col] != down_slice[row][col] {
                             up_slice_mod[row][col].smudge();
                             break;
                         }
                     }
-                    if up_slice_mod[row] == down_slice[row] {
-                        println!("{i}");
+                    if up_slice_mod == down_slice {
+                        return Reflection::Horizontal(i);
                     }
                 }
             }
-            // for (up_row, down_row) in up_slice.iter().zip(down_slice.iter()) {
-            // if up_row != down_row
-            //     && up_row
-            //         .iter()
-            //         .zip(down_row.iter())
-            //         .filter(|(up, down)| up != down)
-            //         .count()
-            //         == 1
-            // {
-            //     let up_slice2 = up_slice.clone();
-            //     let down_slice2 = down_slice.clone();
-            //     if let Some(i) = up_row
-            //         .iter()
-            //         .zip(down_row.iter())
-            //         .position(|(up_item, down_item)| up_item != down_item)
-            //     {
-            //         up_row[i].smudge();
-            //     }
-            //     println!("{up_row:?}\n{down_row:?}");
-            //     println!("{i}");
-            // }
         }
-        println!();
 
-        // (1..self.0.nb_rows())
-        //     .filter(|&i| {
-        //         let (up, down) = Self::calculate_ranges(i, self.0.nb_rows());
-        //         let mut up_slice = self.0.rows_slice(up.start, up.end);
-        //         up_slice.reverse();
-        //         let down_slice = self.0.rows_slice(down.start, down.end);
-        //         up_slice
-        //             .iter()
-        //             .zip(down_slice.iter())
-        //             .filter(|(up_row, down_row)| {
-        //                 (up_row != down_row)
-        //                     && up_row
-        //                         .iter()
-        //                         .zip(down_row.iter())
-        //                         .filter(|(up, down)| up != down)
-        //                         .count()
-        //                         == 1
-        //             })
-        //             .inspect(|(up_row, down_row)| println!("{up_row:?}\n{down_row:?}"))
-        //             .count()
-        //             == 1
-        //     })
-        //     .for_each(|i| println!("{i}"));
-
+        for i in 1..self.0.nb_columns() {
+            let (left_range, right_range) = Self::calculate_ranges(i, self.0.nb_columns());
+            let mut left_slice = self.0.columns_slice(left_range.start, left_range.end);
+            left_slice.reverse();
+            let right_slice = self.0.columns_slice(right_range.start, right_range.end);
+            for col in 0..left_range.len() {
+                if left_slice[col] != right_slice[col]
+                    && left_slice[col]
+                        .iter()
+                        .zip(right_slice[col].iter())
+                        .filter(|(left, right)| left != right)
+                        .count()
+                        == 1
+                {
+                    let mut left_slice_mod = left_slice.clone();
+                    for row in 0..left_slice[col].len() {
+                        if left_slice[col][row] != right_slice[col][row] {
+                            left_slice_mod[col][row].smudge();
+                            break;
+                        }
+                    }
+                    if left_slice_mod == right_slice {
+                        return Reflection::Vertical(i);
+                    }
+                }
+            }
+        }
         Reflection::NotFound
     }
 
