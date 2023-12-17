@@ -178,16 +178,16 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=day13",
-                    "--package=day13"
+                    "--bin=day16",
+                    "--package=day16"
                 ],
                 "filter": {
-                    "name": "day13",
+                    "name": "day16",
                     "kind": "bin"
                 }
             },
             "args": [
-                "data/day13.txt"
+                "data/day16.txt"
             ],
             "cwd": "${workspaceFolder}"
         },

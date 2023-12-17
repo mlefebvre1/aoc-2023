@@ -16,7 +16,7 @@ impl TryFrom<char> for Element {
             'O' => Ok(Self::RoundedRock),
             '#' => Ok(Self::CubeShapedRock),
             '.' => Ok(Self::EmptySpace),
-            _ => Err(anyhow!("can't convert char to element")),
+            _ => Err(anyhow!("can't convert char to element {}", value)),
         }
     }
 }
@@ -61,12 +61,6 @@ impl FromStr for Platform {
     }
 }
 impl Platform {
-    pub fn current_rounded_rocks(&self) -> &Vec<(usize, usize)> {
-        &self.rounded_rocks
-    }
-    pub fn clone_rounded_rocks(&self) -> Vec<(usize, usize)> {
-        self.rounded_rocks.clone()
-    }
     pub fn tilt_north(&mut self) {
         loop {
             let mut stable = true;
