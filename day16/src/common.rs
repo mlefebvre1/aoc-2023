@@ -52,12 +52,12 @@ pub struct Beam {
     pos: (usize, usize),
 }
 impl Beam {
-    fn keep_beam(&self, obstacle: &ObstacleState) -> bool {
+    fn keep_beam(&self, visit: &Visit) -> bool {
         match self.direction {
-            Direction::Up => !obstacle.u,
-            Direction::Down => !obstacle.d,
-            Direction::Left => !obstacle.l,
-            Direction::Right => !obstacle.r,
+            Direction::Up => !visit.u,
+            Direction::Down => !visit.d,
+            Direction::Left => !visit.l,
+            Direction::Right => !visit.r,
         }
     }
 
@@ -121,14 +121,14 @@ impl Beam {
 
 // determines if a beam already reached the obstacle with the direction
 #[derive(Debug, Clone, Copy, Default)]
-struct ObstacleState {
+struct Visit {
     u: bool,
     d: bool,
     l: bool,
     r: bool,
 }
 
-impl ObstacleState {
+impl Visit {
     fn update(&mut self, direction: Direction) {
         match direction {
             Direction::Up => self.u = true,
@@ -143,7 +143,7 @@ impl ObstacleState {
 pub struct Puzzle {
     grid: Grid<Tile>,
     energized: Grid<bool>,
-    obstacle: HashMap<(usize, usize), ObstacleState>,
+    visits: HashMap<(usize, usize), Visit>,
 }
 impl Puzzle {
     pub fn initial_beams_part1(&self) -> Vec<Vec<Beam>> {
@@ -240,7 +240,7 @@ impl Puzzle {
             .into_iter()
             .map(|mut beams| {
                 self.energized.assign(false); //reset to not energized
-                self.clear_obstacle_state();
+                self.clear_visits();
 
                 loop {
                     // for each beam position energize the grid
@@ -261,7 +261,7 @@ impl Puzzle {
                         .filter(|beam| {
                             let tile = self.grid.get(beam.pos).unwrap();
                             if *tile != Tile::EmptySpace {
-                                beam.keep_beam(&self.obstacle[&beam.pos])
+                                beam.keep_beam(&self.visits[&beam.pos])
                             } else {
                                 true
                             }
@@ -272,7 +272,7 @@ impl Puzzle {
                     beams.iter().for_each(|beam| {
                         let tile = self.grid.get(beam.pos).unwrap();
                         if *tile != Tile::EmptySpace {
-                            self.obstacle
+                            self.visits
                                 .get_mut(&beam.pos)
                                 .unwrap()
                                 .update(beam.direction);
@@ -327,8 +327,8 @@ impl Puzzle {
         }
     }
 
-    pub fn clear_obstacle_state(&mut self) {
-        self.obstacle.values_mut().for_each(|v| {
+    pub fn clear_visits(&mut self) {
+        self.visits.values_mut().for_each(|v| {
             v.u = false;
             v.d = false;
             v.l = false;
@@ -349,18 +349,14 @@ impl FromStr for Puzzle {
             .collect();
         let v = v?;
         let e = vec![vec![false; v[0].len()]; v.len()];
-        let obstacle = v
+        let visits = v
             .iter()
             .enumerate()
             .flat_map(|(y, row)| {
                 row.iter()
                     .enumerate()
                     .filter_map(|(x, &col)| {
-                        if col != Tile::EmptySpace {
-                            Some(((x, y), ObstacleState::default()))
-                        } else {
-                            None
-                        }
+                        (col != Tile::EmptySpace).then_some(((x, y), Visit::default()))
                     })
                     .collect::<Vec<_>>()
             })
@@ -368,7 +364,7 @@ impl FromStr for Puzzle {
         Ok(Self {
             grid: Grid::new(v),
             energized: Grid::new(e),
-            obstacle,
+            visits,
         })
     }
 }
