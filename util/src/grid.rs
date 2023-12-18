@@ -18,6 +18,11 @@ impl<T: PartialEq + Copy> Grid<T> {
             *c = value;
         }
     }
+    pub fn assign(&mut self, value: T) {
+        self.0
+            .iter_mut()
+            .for_each(|r| r.iter_mut().for_each(|c| *c = value))
+    }
 
     pub fn rows(&self) -> impl Iterator<Item = &Vec<T>> {
         self.0.iter()

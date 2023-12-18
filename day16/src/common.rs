@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 
 use anyhow::{anyhow, Error};
 use util::grid::Grid;
@@ -52,86 +52,244 @@ pub struct Beam {
     pos: (usize, usize),
 }
 impl Beam {
-    /// Returns a new beam if the current tile splits the beam in 2
-    fn mutate(&mut self, grid: &Grid<Tile>) -> Option<Self> {
-        let tile = grid.get((self.pos.0, self.pos.1)).unwrap();
+    fn keep_beam(&self, obstacle: &ObstacleState) -> bool {
+        match self.direction {
+            Direction::Up => !obstacle.u,
+            Direction::Down => !obstacle.d,
+            Direction::Left => !obstacle.l,
+            Direction::Right => !obstacle.r,
+        }
+    }
+
+    /// Returns a new beam if the current tile splits the beam in 2, return the original beam if the obstacle
+    /// was not reached with that direction yet
+    fn mutate(mut beam: Beam, grid: &Grid<Tile>) -> Vec<Self> {
+        let tile = grid.get((beam.pos.0, beam.pos.1)).unwrap();
+
         match tile {
-            Tile::EmptySpace => None,
-            Tile::HorizontalSplitter => match self.direction {
-                Direction::Right | Direction::Left => None,
+            Tile::EmptySpace => vec![beam],
+            Tile::HorizontalSplitter => match beam.direction {
+                Direction::Right | Direction::Left => {
+                    vec![beam]
+                }
                 Direction::Up | Direction::Down => {
                     // Create a new beam that goes to left direction
-                    self.direction = Direction::Right;
-                    Some(Self {
-                        direction: Direction::Left,
-                        pos: self.pos,
-                    })
+                    beam.direction = Direction::Right;
+                    vec![
+                        beam,
+                        Self {
+                            direction: Direction::Left,
+                            pos: beam.pos,
+                        },
+                    ]
                 }
             },
-            Tile::VerticalSplitter => match self.direction {
+            Tile::VerticalSplitter => match beam.direction {
                 Direction::Right | Direction::Left => {
-                    self.direction = Direction::Down;
-                    Some(Self {
-                        direction: Direction::Up,
-                        pos: self.pos,
-                    })
+                    beam.direction = Direction::Down;
+                    vec![
+                        beam,
+                        Self {
+                            direction: Direction::Up,
+                            pos: beam.pos,
+                        },
+                    ]
                 }
-                Direction::Up | Direction::Down => None,
+                Direction::Up | Direction::Down => vec![beam],
             },
             Tile::LeftwardMirror => {
-                match self.direction {
-                    Direction::Up => self.direction = Direction::Left,
-                    Direction::Down => self.direction = Direction::Right,
-                    Direction::Left => self.direction = Direction::Up,
-                    Direction::Right => self.direction = Direction::Down,
+                match beam.direction {
+                    Direction::Up => beam.direction = Direction::Left,
+                    Direction::Down => beam.direction = Direction::Right,
+                    Direction::Left => beam.direction = Direction::Up,
+                    Direction::Right => beam.direction = Direction::Down,
                 }
-                None
+                vec![beam]
             }
             Tile::RightwardMirror => {
-                match self.direction {
-                    Direction::Up => self.direction = Direction::Right,
-                    Direction::Down => self.direction = Direction::Left,
-                    Direction::Left => self.direction = Direction::Down,
-                    Direction::Right => self.direction = Direction::Up,
+                match beam.direction {
+                    Direction::Up => beam.direction = Direction::Right,
+                    Direction::Down => beam.direction = Direction::Left,
+                    Direction::Left => beam.direction = Direction::Down,
+                    Direction::Right => beam.direction = Direction::Up,
                 }
-                None
+                vec![beam]
             }
         }
     }
 }
 
+// determines if a beam already reached the obstacle with the direction
+#[derive(Debug, Clone, Copy, Default)]
+struct ObstacleState {
+    u: bool,
+    d: bool,
+    l: bool,
+    r: bool,
+}
+
+impl ObstacleState {
+    fn update(&mut self, direction: Direction) {
+        match direction {
+            Direction::Up => self.u = true,
+            Direction::Down => self.d = true,
+            Direction::Left => self.l = true,
+            Direction::Right => self.r = true,
+        }
+    }
+}
+
 //6921
-pub struct Puzzle1 {
+pub struct Puzzle {
     grid: Grid<Tile>,
     energized: Grid<bool>,
+    obstacle: HashMap<(usize, usize), ObstacleState>,
 }
-impl Puzzle1 {
-    pub fn run(&mut self) {
-        let mut beams = vec![Beam {
+impl Puzzle {
+    pub fn initial_beams_part1(&self) -> Vec<Vec<Beam>> {
+        vec![vec![Beam {
             pos: (0, 0),
             direction: Direction::Right,
-        }];
-        self.energized.set((0, 0), true);
-        for _ in 0..650 {
-            // Change the direction of the beams according to the current standing tile, and spawn new beams if
-            // splitters were encountered
-            let mut new_beams: Vec<Beam> = beams
-                .iter_mut()
-                .filter_map(|beam| beam.mutate(&self.grid))
-                .collect();
+        }]]
+    }
+    pub fn initial_beams_part2(&self) -> Vec<Vec<Beam>> {
+        let mut top_beams: Vec<Vec<Beam>> = (1..self.grid.nb_columns() - 2)
+            .map(|x| {
+                vec![Beam {
+                    pos: (x, 0),
+                    direction: Direction::Down,
+                }]
+            })
+            .collect();
+        let mut down_beams: Vec<Vec<Beam>> = (1..self.grid.nb_columns() - 2)
+            .map(|x| {
+                vec![Beam {
+                    pos: (x, self.grid.nb_rows() - 1),
+                    direction: Direction::Up,
+                }]
+            })
+            .collect();
+        let mut left_beams: Vec<Vec<Beam>> = (1..self.grid.nb_rows() - 2)
+            .map(|y| {
+                vec![Beam {
+                    pos: (0, y),
+                    direction: Direction::Right,
+                }]
+            })
+            .collect();
+        let mut right_beams: Vec<Vec<Beam>> = (1..self.grid.nb_rows() - 2)
+            .map(|y| {
+                vec![Beam {
+                    pos: (self.grid.nb_columns() - 1, y),
+                    direction: Direction::Left,
+                }]
+            })
+            .collect();
+        let mut corners = vec![
+            // top-left
+            vec![Beam {
+                pos: (0, 0),
+                direction: Direction::Right,
+            }],
+            vec![Beam {
+                pos: (0, 0),
+                direction: Direction::Down,
+            }],
+            // Top-right
+            vec![Beam {
+                pos: (self.grid.nb_columns() - 1, 0),
+                direction: Direction::Left,
+            }],
+            vec![Beam {
+                pos: (self.grid.nb_columns() - 1, 0),
+                direction: Direction::Down,
+            }],
+            // Bottom-right
+            vec![Beam {
+                pos: (self.grid.nb_columns() - 1, self.grid.nb_rows() - 1),
+                direction: Direction::Left,
+            }],
+            vec![Beam {
+                pos: (self.grid.nb_columns() - 1, self.grid.nb_rows() - 1),
+                direction: Direction::Up,
+            }],
+            //Bottom-left
+            vec![Beam {
+                pos: (0, self.grid.nb_rows() - 1),
+                direction: Direction::Right,
+            }],
+            vec![Beam {
+                pos: (0, self.grid.nb_rows() - 1),
+                direction: Direction::Up,
+            }],
+        ];
+        corners.append(&mut top_beams);
+        corners.append(&mut down_beams);
+        corners.append(&mut right_beams);
+        corners.append(&mut left_beams);
+        corners
+    }
 
-            // Add any new beam to the beam list
-            beams.append(&mut new_beams);
+    pub fn run(&mut self, part1: bool) -> usize {
+        let initial_beams = if part1 {
+            self.initial_beams_part1()
+        } else {
+            self.initial_beams_part2()
+        };
+        initial_beams
+            .into_iter()
+            .map(|mut beams| {
+                self.energized.assign(false); //reset to not energized
+                self.clear_obstacle_state();
 
-            // Move all the beams
-            beams = beams.iter().filter_map(|beam| self.mv(beam)).collect();
+                loop {
+                    // for each beam position energize the grid
+                    beams.iter().map(|beam| beam.pos).for_each(|(x, y)| {
+                        self.energized.set((x, y), true);
+                    });
 
-            // After moving all the beams, energize the grid
-            for (x, y) in beams.iter().map(|beam| beam.pos) {
-                self.energized.set((x, y), true);
-            }
-        }
-        self.display_energized();
+                    // Change the direction of the beams according to the current standing tile, and spawn new beams if
+                    // splitters were encountered
+                    beams = beams
+                        .iter()
+                        .flat_map(|&beam| Beam::mutate(beam, &self.grid))
+                        .collect();
+
+                    // remove beams that already visited the path
+                    beams = beams
+                        .into_iter()
+                        .filter(|beam| {
+                            let tile = self.grid.get(beam.pos).unwrap();
+                            if *tile != Tile::EmptySpace {
+                                beam.keep_beam(&self.obstacle[&beam.pos])
+                            } else {
+                                true
+                            }
+                        })
+                        .collect::<Vec<_>>();
+
+                    // update obstacle states
+                    beams.iter().for_each(|beam| {
+                        let tile = self.grid.get(beam.pos).unwrap();
+                        if *tile != Tile::EmptySpace {
+                            self.obstacle
+                                .get_mut(&beam.pos)
+                                .unwrap()
+                                .update(beam.direction);
+                        }
+                    });
+
+                    // Move all the beams
+                    beams = beams.iter().filter_map(|beam| self.mv(beam)).collect();
+
+                    // if there's no beam, then we're done
+                    if beams.is_empty() {
+                        return self.count_energized_tiles();
+                    }
+                }
+            })
+            .max()
+            .unwrap()
     }
     /// returns None if the beam is exiting the grid
     fn mv(&self, beam: &Beam) -> Option<Beam> {
@@ -169,25 +327,20 @@ impl Puzzle1 {
         }
     }
 
+    pub fn clear_obstacle_state(&mut self) {
+        self.obstacle.values_mut().for_each(|v| {
+            v.u = false;
+            v.d = false;
+            v.l = false;
+            v.r = false;
+        })
+    }
+
     pub fn count_energized_tiles(&self) -> usize {
         self.energized.find_all(&true).len()
     }
-
-    pub fn display_energized(&self) {
-        for row in self.energized.rows() {
-            for col in row.iter() {
-                if *col {
-                    print!("#")
-                } else {
-                    print!(".")
-                }
-            }
-            println!()
-        }
-        // println!("{}", self.energized)
-    }
 }
-impl FromStr for Puzzle1 {
+impl FromStr for Puzzle {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let v: Result<Vec<Vec<Tile>>, Error> = s
@@ -196,13 +349,30 @@ impl FromStr for Puzzle1 {
             .collect();
         let v = v?;
         let e = vec![vec![false; v[0].len()]; v.len()];
+        let obstacle = v
+            .iter()
+            .enumerate()
+            .flat_map(|(y, row)| {
+                row.iter()
+                    .enumerate()
+                    .filter_map(|(x, &col)| {
+                        if col != Tile::EmptySpace {
+                            Some(((x, y), ObstacleState::default()))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect();
         Ok(Self {
             grid: Grid::new(v),
             energized: Grid::new(e),
+            obstacle,
         })
     }
 }
-impl Display for Puzzle1 {
+impl Display for Puzzle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.grid)
     }
