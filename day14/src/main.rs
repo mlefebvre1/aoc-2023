@@ -1,14 +1,11 @@
 use std::str::FromStr;
 
 use common::Platform;
-use util::Cli;
 
 mod common;
 
 fn main() {
-    let cli = Cli::get();
-    println!("part1={}", part1(&cli.file));
-    println!("part2={}", part2(&cli.file));
+    util::run!();
 }
 
 fn part1(file: &str) -> String {
