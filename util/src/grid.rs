@@ -127,3 +127,69 @@ impl<T: PartialEq + Display + Copy> Display for Grid<T> {
         write!(f, "{s}")
     }
 }
+
+pub struct NGrid<T>
+where
+    T: Copy + PartialEq,
+{
+    inner: InnerGrid<T>,
+    offset: (usize, usize),
+}
+impl<T> NGrid<T>
+where
+    T: Copy + PartialEq,
+{
+    pub fn from_vec2(v: Vec<Vec<T>>, offset: (usize, usize)) -> Self {
+        Self { inner: v, offset }
+    }
+
+    pub fn get(&self, (x, y): (isize, isize)) -> Option<T> {
+        let (xp, yp) = self.adjust((x, y));
+        self.inner.get(yp).and_then(|row| row.get(xp)).copied()
+    }
+
+    pub fn set(&mut self, (x, y): (isize, isize), value: T) {
+        let (xp, yp) = self.adjust((x, y));
+        if let Some(c) = self.inner.get_mut(yp).and_then(|row| row.get_mut(xp)) {
+            *c = value;
+        }
+    }
+
+    pub fn rows(&self) -> impl Iterator<Item = &Vec<T>> {
+        self.inner.iter()
+    }
+
+    fn adjust(&self, (x, y): (isize, isize)) -> (usize, usize) {
+        (
+            (x + self.offset.0 as isize) as usize,
+            (y + self.offset.1 as isize) as usize,
+        )
+    }
+
+    pub fn count(&self, item: &T) -> usize {
+        let mut cnt = 0;
+        for row in self.rows() {
+            for col in row.iter() {
+                if col == item {
+                    cnt += 1;
+                }
+            }
+        }
+        cnt
+    }
+}
+impl<T> Display for NGrid<T>
+where
+    T: Copy + Display + PartialEq,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.rows().for_each(|row| {
+            row.iter().for_each(|col| {
+                s.push_str(&format!("{col}"));
+            });
+            s.push('\n');
+        });
+        write!(f, "{s}")
+    }
+}

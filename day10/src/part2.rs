@@ -1,28 +1,22 @@
 use std::str::FromStr;
 
-use util::grid::Grid;
-
 use crate::common::Diagram;
 
 pub fn run(file: &str) -> String {
     let data = std::fs::read_to_string(file).unwrap();
-    let diagram = Diagram::from_str(&data).unwrap();
-    let shape = diagram.grid_shape();
+    let coords = Diagram::from_str(&data).unwrap().run();
+    let area = calculate_area(&coords);
+    let boundary = coords.len();
+    let ans = area - (boundary / 2) + 1; // pick theorem to calculate interior points from the are and the boundary points
+    ans.to_string()
+}
 
-    let visit = diagram.run();
-    let mut tile_visited = Grid::new(vec![vec![false; shape.0]; shape.1]);
-    visit.into_iter().for_each(|(x, y)| {
-        tile_visited.set((x, y), true);
-    });
-    for row in tile_visited.rows() {
-        for col in row {
-            if *col {
-                print!("#")
-            } else {
-                print!(".")
-            }
-        }
-        println!()
+fn calculate_area(coords: &[(usize, usize)]) -> usize {
+    let mut area = 0;
+    for i in 0..coords.len() {
+        let next_i = (i + 1) % coords.len();
+        area +=
+            (coords[i].0 * coords[next_i].1) as isize - (coords[i].1 * coords[next_i].0) as isize;
     }
-    "".to_string()
+    (area / 2).unsigned_abs()
 }

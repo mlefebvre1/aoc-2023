@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use anyhow::{anyhow, Error};
 use util::grid::Grid;
@@ -28,6 +28,21 @@ impl TryFrom<char> for TileType {
             'S' => Ok(Self::Starting),
             _ => Err(anyhow!("can't convert '{value}' to tile type")),
         }
+    }
+}
+impl Display for TileType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let c = match self {
+            Self::Vertical => '|',
+            Self::Horizontal => '-',
+            Self::NorthEast => 'L',
+            Self::NorthWest => 'J',
+            Self::SouthWest => '7',
+            Self::SouthEast => 'F',
+            Self::Ground => '.',
+            Self::Starting => 'S',
+        };
+        write!(f, "{c}")
     }
 }
 
@@ -60,7 +75,8 @@ impl Diagram {
     #[allow(dead_code)]
     pub fn display(&self) {
         self.0.rows().for_each(|row| {
-            println!("{row:?}");
+            row.iter().for_each(|c| print!("{c}"));
+            println!();
         })
     }
     pub fn grid_shape(&self) -> (usize, usize) {
