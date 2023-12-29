@@ -12,6 +12,7 @@ pub fn run(file: &str) -> String {
 }
 
 fn calculate_area(coords: &[(usize, usize)]) -> usize {
+    // Shoelace formula
     let mut area = 0;
     for i in 0..coords.len() {
         let next_i = (i + 1) % coords.len();
