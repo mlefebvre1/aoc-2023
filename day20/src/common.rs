@@ -1,10 +1,11 @@
 use std::{cell::RefCell, collections::HashMap, fmt::Display, str::FromStr};
 
 use anyhow::Error;
+use num::Integer;
 
 type ModuleName = String;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 enum Pulse {
     #[default]
     Low,
@@ -26,11 +27,47 @@ pub struct Puzzle {
     high_pulses: RefCell<usize>,
 }
 impl Puzzle {
-    pub fn run(&self) -> usize {
+    pub fn run_part1(&self) -> usize {
         for _ in 0..1000 {
             self.run_cycle();
         }
         *self.low_pulses.borrow() * *self.high_pulses.borrow()
+    }
+    pub fn run_part2(&self) -> usize {
+        // It can be seen that in order to get a low pulse on "rx", 4 conjunction must output low hence
+        // receive all high signals. It was observed that these 4 conjunctions are only connected to flipflops and
+        // that those flipflops are connected as a chain. Because, they are connected as a chain, we use the depth in
+        // the chain of each flipflop that are connected to the conjunction of that chain and sum them (2^depth).
+        // Finally this gives us the number of press in order to get all inputs high pulse for the current conjunction.
+        // In order to find the number of press when all 4 conjonctions receives all high pulses, we simply find the
+        // leat common multiple of the 4. Refer to the drawio "part20.drawio" for visualisation
+        let inner = self.inner.borrow();
+        let mut nb_presses = 1;
+        inner["broadcaster"].outputs().iter().for_each(|output| {
+            let total = self.explore(output, 0);
+            nb_presses = nb_presses.lcm(&total);
+        });
+        nb_presses
+    }
+    pub fn explore(&self, input: &str, depth: u32) -> usize {
+        let inner = self.inner.borrow();
+
+        let (ff, conj): (Vec<String>, Vec<String>) = inner[input]
+            .outputs()
+            .into_iter()
+            .partition(|name| matches!(&inner[name], Module::FlipFlop(_)));
+
+        let weight = if conj.is_empty() {
+            0
+        } else {
+            2usize.pow(depth)
+        };
+
+        if let Some(module) = ff.first() {
+            weight + self.explore(module, depth + 1)
+        } else {
+            weight
+        }
     }
     pub fn run_cycle(&self) {
         *self.low_pulses.borrow_mut() += 1; //button -low->broadcast
@@ -38,7 +75,9 @@ impl Puzzle {
     }
     fn send_pulse(&self, input: &str, pulse: Pulse) {
         let output_modules = self.inner.borrow().get(input).unwrap().outputs();
-
+        if input == "th" && pulse == Pulse::Low {
+            println!("reached rx with low pulse!!");
+        }
         // process pulses
         let new_pulses = output_modules
             .iter()
@@ -62,8 +101,11 @@ impl Puzzle {
             .collect::<Vec<_>>();
 
         // propagate
-        for (module_name, pulse) in new_pulses {
-            if let Some(pulse) = pulse {
+        for (module_name, pulse2) in new_pulses {
+            if let Some(pulse) = pulse2 {
+                if module_name == "th" && pulse == Pulse::Low {
+                    println!("found!");
+                }
                 self.send_pulse(module_name, pulse);
             }
         }

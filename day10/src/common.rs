@@ -79,9 +79,7 @@ impl Diagram {
             println!();
         })
     }
-    pub fn grid_shape(&self) -> (usize, usize) {
-        self.0.shape()
-    }
+
     fn initial_flow(&self) -> ((usize, usize), HorizontalDirection, VerticalDirection) {
         let tile_loc = self.0.find(&TileType::Starting).unwrap();
 
