@@ -23,6 +23,9 @@ impl<T: PartialEq + Copy> Grid<T> {
             .iter_mut()
             .for_each(|r| r.iter_mut().for_each(|c| *c = value))
     }
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.0.iter().flat_map(|r| r.iter())
+    }
 
     pub fn rows(&self) -> impl Iterator<Item = &Vec<T>> {
         self.0.iter()
