@@ -1,11 +1,10 @@
 fn main() {
-    let cli = util::Cli::get();
-    println!("part1={}", part1(&cli.file));
-    println!("part2={}", part2(&cli.file));
+    let puzzle_input = util::fetch_puzzle_input(1).unwrap();
+    println!("part1={}", part1(&puzzle_input));
+    println!("part2={}", part2(&puzzle_input));
 }
 
-fn part1(file: &str) -> String {
-    let data = std::fs::read_to_string(file).unwrap();
+fn part1(data: &str) -> String {
     let ans: u32 = data
         .lines()
         .map(|line| {
@@ -18,7 +17,7 @@ fn part1(file: &str) -> String {
     ans.to_string()
 }
 
-fn part2(file: &str) -> String {
+fn part2(data: &str) -> String {
     let replace_with_digit = |line: &str| {
         line.replace("one", "o1e")
             .replace("two", "t2o")
@@ -31,7 +30,6 @@ fn part2(file: &str) -> String {
             .replace("nine", "n9e")
     };
 
-    let data = std::fs::read_to_string(file).unwrap();
     let ans: u32 = data
         .lines()
         .map(|line| {

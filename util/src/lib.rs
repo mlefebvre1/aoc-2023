@@ -1,8 +1,10 @@
 mod cli;
 
 pub mod grid;
+mod puzzle_input;
 
 pub use cli::Cli;
+pub use puzzle_input::fetch_puzzle_input;
 
 #[macro_export]
 macro_rules! run {
